@@ -49,3 +49,7 @@ class case_handler:
 	# curl -X POST -F size=20 http://0.0.0.0:1725/v1/system/swap/resize
 	def system_swap_resize(form):
 		return system_manager.resize_swap(int(form['size']))
+	
+	# curl -X POST http://0.0.0.0:1725/v1/system/total/physical/memory
+	def system_total_physical_memory(form):
+		return system_manager.resize_swap()

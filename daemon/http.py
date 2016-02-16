@@ -60,7 +60,7 @@ class cg_http_server:
 		server.serve_forever()
 	
 	def start():
-		http = threading.Thread(target = cg_http_server.run, args = ())
+		http = threading.Thread(target = cg_http_server.run, args = [])
 		http.setDaemon(True)
 		http.start()
 		return http
