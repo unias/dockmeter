@@ -4,7 +4,7 @@ import socket, time, threading
 
 class master_minion_connector:
 	
-	tcp_port = 1726
+	tcp_port = 1727
 	
 	def client_connect(server_ip):
 		while True:

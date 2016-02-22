@@ -53,7 +53,7 @@ class cg_http_handler(BaseHTTPRequestHandler):
 
 class cg_http_server:
 	
-	port = 1725
+	port = 1726
 	
 	def run():
 		server = HTTPServer(('0.0.0.0', cg_http_server.port), cg_http_handler)
