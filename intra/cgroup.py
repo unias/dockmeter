@@ -26,12 +26,23 @@ class cgroup_manager:
 	__prefix_lxc__ = '/sys/fs/cgroup/%s/lxc/%s/%s'
 	__prefix_lxcinit__ = '/sys/fs/cgroup/%s/init.scope/lxc/%s/%s'
 	
-	__default_prefix__ = __prefix_lxc__
-	
-	__default_memory_limit__ = 4
+	def set_default_memory_limit(limit):
+		cgroup_manager.__default_memory_limit__ = limit
 	
 	def set_cgroup_prefix(prefix = __prefix_lxc__):
 		cgroup_manager.__default_prefix__ = prefix
+	
+	def auto_detect_prefix():
+		cgroup_manager.__default_prefix__ = cgroup_manager.__prefix_docker__
+		if len(cgroup_manager.get_cgroup_containers()) > 0:
+			return
+		cgroup_manager.__default_prefix__ = cgroup_manager.__prefix_lxcinit__
+		if len(cgroup_manager.get_cgroup_containers()) > 0:
+			return
+		cgroup_manager.__default_prefix__ = cgroup_manager.__prefix_lxc__
+		if len(cgroup_manager.get_cgroup_containers()) > 0:
+			return
+		# print("[info]", "set cgroup prefix to %s" % cgroup_manager.__default_prefix__)
 	
 	def get_cgroup_containers():
 		containers = subprocess.getoutput("find %s -type d 2>/dev/null | awk -F\/ '{print $(NF-1)}'" % (cgroup_manager.__default_prefix__ % ('cpu', '*', '.'))).split()
@@ -82,19 +93,19 @@ class cgroup_manager:
 			memory_limit_in_bytes = cgroup_manager.__default_memory_limit__ << 30
 			mem_phy_quota = min(data["mem_phy_quota"], memory_limit_in_bytes)
 			mem_page_quota = memory_limit_in_bytes
-			os.system('lxc-freeze -n %s' % uuid)
+			cgroup_controller.write_value('freezer', uuid, 'freezer.state', 'FROZEN')
 			cgroup_controller.write_value('memory', uuid, 'memory.limit_in_bytes', mem_phy_quota)
 			cgroup_controller.write_value('memory', uuid, 'memory.limit_in_bytes', mem_phy_quota)
 			cgroup_controller.write_value('memory', uuid, 'memory.memsw.limit_in_bytes', mem_page_quota)
-			os.system('lxc-unfreeze -n %s' % uuid)
+			cgroup_controller.write_value('freezer', uuid, 'freezer.state', 'THAWED')
 	
 	def set_container_physical_memory_limit(uuid, Mbytes, freeze = False):
 		if freeze:
-			os.system('lxc-freeze -n %s' % uuid)
+			cgroup_controller.write_value('freezer', uuid, 'freezer.state', 'FROZEN')
 		memory_limit = int(max(0, Mbytes)) << 20
 		cgroup_controller.write_value('memory', uuid, 'memory.limit_in_bytes', memory_limit)
 		if freeze:
-			os.system('lxc-unfreeze -n %s' % uuid)
+			cgroup_controller.write_value('freezer', uuid, 'freezer.state', 'THAWED')
 		
 	def set_container_cpu_priority_limit(uuid, ceof):
 		cpu_scaling = min(1024, 10 + int(1024 * ceof))

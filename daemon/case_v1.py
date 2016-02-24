@@ -7,11 +7,13 @@ from intra.billing import billing_manager
 
 class case_handler:
 	
+	pass
+
+	'''
 	# curl -X POST -F uuid=n1 http://0.0.0.0:1726/v1/billing/increment
 	def billing_increment(form):
 		return billing_manager.fetch_increment_and_clean(form['uuid'])
 	
-	'''
 	# curl -X POST -F uuid=n1 http://0.0.0.0:1726/v1/blacklist/add
 	def blacklist_add(form):
 		exists = form['uuid'] in smart_controller.blacklist
@@ -32,7 +34,6 @@ class case_handler:
 		for item in smart_controller.blacklist:
 			blacklist.append(item)
 		return blacklist
-	'''
 	
 	# curl -X POST http://0.0.0.0:1726/v1/cgroup/containers
 	def cgroup_containers(form):
@@ -53,3 +54,4 @@ class case_handler:
 	# curl -X POST http://0.0.0.0:1726/v1/system/total/physical/memory
 	def system_total_physical_memory(form):
 		return system_manager.resize_swap()
+	'''

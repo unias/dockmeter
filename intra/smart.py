@@ -50,7 +50,7 @@ class smart_controller:
 				item_alloc = mem_alloc * ceof
 				cgroup_manager.set_container_cpu_priority_limit(item, ceof)
 				cgroup_manager.set_container_physical_memory_limit(item, item_alloc)
-				print(item, "cpu:", "%.1f%%," % (ceof * 100), "mem:", item_alloc, "mbytes")
+				print(item if len(item)<10 else item[:10] + "..", "cpu share:", "%.1f%%," % (ceof * 100), "mem alloc:", item_alloc, "mbytes")
 			
 
 """

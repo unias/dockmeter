@@ -1,14 +1,6 @@
 #!/usr/bin/python3
 
-# billing collector;
-# load balancer;
-
 import time, sys, signal, json
-
-from intra.system import system_manager
-from intra.smart import smart_controller
-from intra.cgroup import cgroup_manager
-from daemon.http import cg_http_server
 
 if __name__ == '__main__':
 	
@@ -17,19 +9,28 @@ if __name__ == '__main__':
 	signal.signal(signal.SIGINT, signal_handler)
 	
 	if len(sys.argv) > 1:
-		from server.common import master_minion_connector
+		from intra.cgroup import cgroup_manager
+		cgroup_manager.auto_detect_prefix()
+		cgroup_manager.set_default_memory_limit(4)
+
+		from intra.system import system_manager
 		system_manager.set_db_prefix('/home/docklet/meter')
 		system_manager.resize_swap(32)
 		
+		from connector.minion import minion_connector
+		minion_connector.start(sys.argv[1])
+
 		from policy.builtin import etime_policy
-		smart_controller.set_policy(etime_policy)
+		from intra.smart import smart_controller
 		
-		cg_http_server.start()
-		master_minion_connector.start(sys.argv[1])
+		smart_controller.set_policy(etime_policy)
 		smart_controller.smart_control_forever()
+		
+		# from daemon.http import cg_http_server
+		# cg_http_server.start()
 	else:
-		from server.server import master_minion_server
-		master_minion_server.start()
+		from connector.master import master_connector
+		master_connector.start()
 		while True:
 			line = sys.stdin.readline().strip()
 			if line == 'list':
