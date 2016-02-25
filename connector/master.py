@@ -5,6 +5,8 @@ import socket, select, errno, threading
 class master_connector:
 	
 	tcp_port = 1727
+	max_minions = 256
+	
 	conn = {}
 	epoll_fd = select.epoll()
 
@@ -13,7 +15,7 @@ class master_connector:
 		master_connector.conn[fd][0].close()
 		addr = master_connector.conn[fd][1]
 		master_connector.conn.pop(fd)
-		print("close conn '%s', remaining %d conn." % (addr, len(master_connector.conn)))
+		# print("[warn]", "close conn '%s', remaining %d conn." % (addr, len(master_connector.conn)))
 
 	def do_message_response(input_buffer):
 		assert(input_buffer == b'ack')
@@ -28,8 +30,8 @@ class master_connector:
 	def run_forever():
 		listen_fd = socket.socket(socket.AF_INET, socket.SOCK_STREAM, 0)
 		listen_fd.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-		listen_fd.bind(('', 1726))
-		listen_fd.listen(10)
+		listen_fd.bind(('', master_connector.tcp_port))
+		listen_fd.listen(master_connector.max_minions)
 		
 		master_connector.epoll_fd.register(listen_fd.fileno(), select.EPOLLIN)
 		

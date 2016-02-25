@@ -1,4 +1,4 @@
-import subprocess, time, os
+import subprocess, time, os, threading
 
 from intra.system import system_manager
 from intra.cgroup import cgroup_manager
@@ -9,10 +9,16 @@ class smart_controller:
 	def set_policy(policy):
 		smart_controller.policy = policy
 	
-	def smart_control_forever(INTERVAL = 4):
+	def start(interval = 4):
+		thread = threading.Thread(target = smart_controller.smart_control_forever, args = [interval])
+		thread.setDaemon(True)
+		thread.start()
+		return thread
+	
+	def smart_control_forever(interval):
 		last_live = []
 		while True:
-			time.sleep(INTERVAL)
+			time.sleep(interval)
 			
 			live = cgroup_manager.get_cgroup_containers()
 			for item in live:

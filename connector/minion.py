@@ -19,6 +19,7 @@ class minion_connector:
 					time.sleep(1)
 				fd.close()
 			except socket.error as e:
+				print("[info]", "released from master.")
 				pass
 			except Exception as e:
 				print("[warn]", e)

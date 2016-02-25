@@ -1,7 +1,10 @@
 import json, cgi, threading
 from http.server import BaseHTTPRequestHandler, HTTPServer
 
-class cg_http_handler(BaseHTTPRequestHandler):
+class base_http_handler(BaseHTTPRequestHandler):
+	
+	def load_module(self):
+		return None
 	
 	def do_POST(self):
 		try:
@@ -12,7 +15,7 @@ class cg_http_handler(BaseHTTPRequestHandler):
 			length = self.headers['content-length']
 			if length == None:
 				length = self.headers['content-length'] = 0
-			if int(length) > (1<<16):
+			if int(length) > (1<<12):
 				raise Exception("data too large")
 			http_form = cgi.FieldStorage(fp=self.rfile, headers=self.headers,environ={'REQUEST_METHOD':'POST','CONTENT_TYPE': "text/html"})
 			
@@ -33,13 +36,14 @@ class cg_http_handler(BaseHTTPRequestHandler):
 				raise Exception(default_exception)
 			[null, version, path] = parts
 			
-			module = __import__('daemon.case_' + version)
-			handler = module.__dict__['case_' + version].__dict__['case_handler']
+			pymodule = self.load_module() + '_' + version
+			module = __import__('daemon.' + pymodule)
+			handler = module.__dict__[pymodule].__dict__['case_handler']
 			method = path.replace('/', '_')
 			if not hasattr(handler, method):
 				raise Exception(default_exception)
 			
-			data = handler.__dict__[method](form)
+			data = handler.__dict__[method](form, self.handler_class.args)
 		except Exception as e:
 			success = False
 			data = {"reason": str(e)}
@@ -51,16 +55,28 @@ class cg_http_handler(BaseHTTPRequestHandler):
 			self.wfile.write("\n".encode())
 		return
 
-class cg_http_server:
+class master_http_handler(base_http_handler):
 	
-	port = 1726
+	http_port = 1728
 	
-	def run():
-		server = HTTPServer(('0.0.0.0', cg_http_server.port), cg_http_handler)
+	def load_module(self):
+		self.handler_class = master_http_handler
+		return 'master'
+
+class minion_http_handler(base_http_handler):
+	
+	http_port = 1729
+	
+	def load_module(self):
+		self.handler_class = minion_http_handler
+		return 'minion'
+
+class http_daemon_listener:
+	
+	def __init__(self, handler_class, args = None):
+		handler_class.args = args
+		self.handler_class = handler_class
+
+	def listen(self):
+		server = HTTPServer(('', self.handler_class.http_port), self.handler_class)
 		server.serve_forever()
-	
-	def start():
-		http = threading.Thread(target = cg_http_server.run, args = [])
-		http.setDaemon(True)
-		http.start()
-		return http
