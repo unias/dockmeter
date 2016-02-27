@@ -98,7 +98,7 @@ class system_manager:
 		
 		available_mem_resource = sysloads['mem_free'] + \
 			sysloads['swap_free'] - total_mem_limit + total_mem_used
-		return {"Mbytes": available_mem_resource, "physical": sysloads['mem_free'], "load": sysloads['cpu_free']}
+		return {"Mbytes": available_mem_resource, "physical": sysloads['mem_free'], "cpu_free": sysloads['cpu_free']}
 
 	def get_total_physical_memory_for_containers():
 		total_mem_used = 0
@@ -116,4 +116,3 @@ class system_manager:
 		total_physical_memory_for_containers = sysloads['mem_free'] + total_mem_used
 		
 		return {"Mbytes": total_physical_memory_for_containers}
-		

@@ -32,6 +32,6 @@ class case_handler:
 		if len(candidates) <= 0:
 			raise Exception("no minions")
 		else:
-			from policy.allocation import candidates_selector
+			from policy.allocate import candidates_selector
 			one = candidates_selector.select(candidates)
 			return {"recommend": one}

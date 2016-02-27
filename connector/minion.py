@@ -31,4 +31,3 @@ class minion_connector:
 		thread.setDaemon(True)
 		thread.start()
 		return thread
-

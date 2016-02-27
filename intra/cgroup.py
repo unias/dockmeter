@@ -110,4 +110,3 @@ class cgroup_manager:
 	def set_container_cpu_priority_limit(uuid, ceof):
 		cpu_scaling = min(1024, 10 + int(1024 * ceof))
 		cgroup_controller.write_value('cpu', uuid, 'cpu.shares', cpu_scaling)
-

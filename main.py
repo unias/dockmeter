@@ -22,7 +22,7 @@ if __name__ == '__main__':
 		from connector.minion import minion_connector
 		minion_connector.start(sys.argv[1])
 
-		from policy.builtin import etime_policy
+		from policy.quota import etime_policy
 		from intra.smart import smart_controller
 		
 		smart_controller.set_policy(etime_policy)
