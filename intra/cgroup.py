@@ -5,7 +5,7 @@ class cgroup_controller:
 	def read_value(group, uuid, item):
 		path = cgroup_manager.__default_prefix__ % (group, uuid, item)
 		if not os.path.exists(path):
-			raise Exception('container "%s" not found!' % uuid)
+			raise Exception('read: container "%s" not found!' % uuid)
 		with open(path, 'r') as file:
 			value = file.read()
 		return value.strip()
@@ -13,7 +13,7 @@ class cgroup_controller:
 	def write_value(group, uuid, item, value):
 		path = cgroup_manager.__default_prefix__ % (group, uuid, item)
 		if not os.path.exists(path):
-			raise Exception('container "%s" not found!' % uuid)
+			raise Exception('write: container "%s" not found!' % uuid)
 		try:
 			with open(path, 'w') as file:
 				file.write(str(value))
