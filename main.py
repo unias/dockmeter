@@ -16,7 +16,7 @@ if __name__ == '__main__':
 		cgroup_manager.set_default_memory_limit(4)
 
 		from intra.system import system_manager
-		system_manager.set_db_prefix('/home/docklet/meter')
+		system_manager.set_db_prefix('/var/lib/docklet/meter')
 		system_manager.resize_swap(32)
 		
 		from connector.minion import minion_connector
