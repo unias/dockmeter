@@ -11,7 +11,7 @@ class etime_policy(identify_policy):
 	def get_score_by_uuid(uuid):
 		pid = cgroup_manager.get_container_pid(uuid)
 		etime = system_manager.get_proc_etime(pid)
-		return 1.0 / etime
+		return 1.0 + 1.0 / (1.0 + etime)
 
 class mem_usage_policy(identify_policy):
 	
@@ -35,7 +35,7 @@ class cpu_usage_rev_policy(identify_policy):
 	
 	def get_score_by_uuid(uuid):
 		sample = cgroup_manager.get_container_sample(uuid)
-		return 1.0 / sample["cpu_sample"]
+		return 1.0 + 1.0 / (1.0 + sample["cpu_sample"])
 
 class cpu_speed_policy(identify_policy):
 	
@@ -51,3 +51,4 @@ class fixed_policy(identify_policy):
 
 	def get_score_by_uuid(uuid):
 		return 4.0 if uuid in fixed_policy.active_list else 1.0
+

@@ -1,5 +1,15 @@
 #!/usr/bin/python3
 
+########################################
+# Boot for Local:
+#   sudo ./main 0.0.0.0
+#
+
+########################################
+# Usage for Local:
+#    curl -F uuid="lxc-name1" http://0.0.0.0:1729/v1/cgroup/container/sample
+#
+
 import time, sys, signal, json
 
 if __name__ == '__main__':
