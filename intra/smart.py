@@ -19,45 +19,47 @@ class smart_controller:
 		last_live = []
 		while True:
 			time.sleep(interval)
+			try:
+				live = cgroup_manager.get_cgroup_containers()
+				for item in live:
+					try:
+						last_live.remove(item)
+					except:
+						pass
+					try:
+						cgroup_manager.protect_container_oom(item)
+						sample = cgroup_manager.get_container_sample(item)
+						billing_manager.add_usage_sample(item, sample)
+					except Exception as e:
+						print("[exception]", e)
+				for item in last_live:
+					billing_manager.clean_dead_node(item)
+				last_live = live
+				is_ready = True
 			
-			live = cgroup_manager.get_cgroup_containers()
-			for item in live:
-				try:
-					last_live.remove(item)
-				except:
-					pass
-				try:
-					cgroup_manager.protect_container_oom(item)
-					sample = cgroup_manager.get_container_sample(item)
-					billing_manager.add_usage_sample(item, sample)
-				except Exception as e:
-					print("[exception]", e)
-			for item in last_live:
-				billing_manager.clean_dead_node(item)
-			last_live = live
-			is_ready = True
-			
-			memory_available = system_manager.get_available_memsw()
-			if memory_available['Mbytes'] <= 0:
-				print("[warning]", 'not recommended for overloaded containers.')
+				memory_available = system_manager.get_available_memsw()
+				if memory_available['Mbytes'] <= 0:
+					print("[warning]", 'not recommended for overloaded containers.')
 			
 			
-			total_score = 0.0
-			score_mapping = {}
-			for item in live:
-				score = max(1e-2, smart_controller.policy.get_score_by_uuid(item))
-				score_mapping[item] = score
-				total_score += score
+				total_score = 0.0
+				score_mapping = {}
+				for item in live:
+					score = max(1e-8, smart_controller.policy.get_score_by_uuid(item))
+					score_mapping[item] = score
+					print(item, "(score)", score)
+					total_score += score
 			
-			mem_alloc = system_manager.get_total_physical_memory_for_containers()['Mbytes']
+				mem_alloc = system_manager.get_total_physical_memory_for_containers()['Mbytes']
 			
-			for item in live:
-				ceof = score_mapping[item] / total_score
-				item_alloc = mem_alloc * ceof
-				cgroup_manager.set_container_cpu_priority_limit(item, ceof)
-				cgroup_manager.set_container_physical_memory_limit(item, item_alloc)
-				print(item if len(item)<16 else item[:16] + "..", "cpu share:", "%.1f%%," % (ceof * 100), "mem alloc:", item_alloc, "mbytes")
-			
+				for item in live:
+					ceof = score_mapping[item] / total_score
+					item_alloc = mem_alloc * ceof
+					cgroup_manager.set_container_cpu_priority_limit(item, ceof)
+					cgroup_manager.set_container_physical_memory_limit(item, item_alloc)
+					# print(item if len(item)<16 else item[:16] + "..", "cpu share:", "%.1f%%," % (ceof * 100), "mem alloc:", item_alloc, "mbytes")
+			except:
+				pass
 
 """
 def lookup_forever():

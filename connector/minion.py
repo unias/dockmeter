@@ -6,10 +6,12 @@ class minion_connector:
 	
 	def connect(server_ip):
 		from connector.master import master_connector
+		connected = True
 		while True:
 			try:
 				fd = socket.socket(socket.AF_INET, socket.SOCK_STREAM, 0)
 				fd.connect((server_ip, master_connector.tcp_port))
+				connected = True
 				print("[info]", "connected to master.")
 				while True:
 					data = b'ack'
@@ -19,7 +21,9 @@ class minion_connector:
 					time.sleep(1)
 				fd.close()
 			except socket.error as e:
-				print("[info]", "non-connected with master.")
+				if connected:
+					print("[info]", "non-connected with master.")
+				connected = False
 				pass
 			except Exception as e:
 				print("[warn]", e)

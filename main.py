@@ -32,10 +32,10 @@ if __name__ == '__main__':
 		from connector.minion import minion_connector
 		minion_connector.start(sys.argv[1])
 
-		from policy.quota import etime_policy
+		from policy.quota import identify_policy
 		from intra.smart import smart_controller
 		
-		smart_controller.set_policy(etime_policy)
+		smart_controller.set_policy(identify_policy)
 		smart_controller.start()
 		
 		http = http_daemon_listener(minion_http_handler)

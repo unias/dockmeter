@@ -116,3 +116,4 @@ class system_manager:
 		total_physical_memory_for_containers = sysloads['mem_free'] + total_mem_used
 		
 		return {"Mbytes": total_physical_memory_for_containers}
+
