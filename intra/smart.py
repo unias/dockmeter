@@ -31,7 +31,7 @@ class smart_controller:
 						cgroup_manager.protect_container_oom(item)
 						sample = cgroup_manager.get_container_sample(item)
 						mem_usage_mapping[item] = math.ceil(sample['mem_page_sample'] * 1e-6)
-						billing_manager.add_usage_sample(item, sample)
+						billing_manager.add_usage_sample(item, sample, interval)
 					except:
 						pass
 				for item in last_live:
@@ -88,59 +88,6 @@ class smart_controller:
 			except:
 				pass
 
-"""
-def lookup_forever():
-	assert(BOOK_LEN > 2)
-	
-	while True:
-		time.sleep(INTERVAL)
-		
-		live_containers = []
-		for cont in get_local_live_containers():
-			try:
-				usage = get_cgroup_usages(prefix + "lxc/" + cont)
-				if cont not in ResourceHTTPHandler.lxc_book:
-					on_new_lxc_comes(cont)
-					ResourceHTTPHandler.lxc_book[cont] = [usage]
-				elif usage['oom_killer']:
-					on_old_lxc_goes(cont)
-					on_new_lxc_comes(cont)
-					ResourceHTTPHandler.lxc_book[cont] = [usage]
-				else:
-					on_lxc_acct_usage(cont, usage['cpu']-ResourceHTTPHandler.lxc_book[cont][-1]['cpu'], usage['phy_mem']+ResourceHTTPHandler.lxc_book[cont][-1]['phy_mem']>>1)
-					ResourceHTTPHandler.lxc_book[cont].append(usage)
-					if len(ResourceHTTPHandler.lxc_book[cont]) >= BOOK_LEN:
-						ResourceHTTPHandler.lxc_book[cont] = judge_lxc_resource_usage(cont, ResourceHTTPHandler.lxc_book[cont])
-					
-				live_containers.append(cont)
-			except Exception as ex:
-				print("[warning]", ex)
-				pass
-		
-		lxc_book_new = {}
-		for cont in ResourceHTTPHandler.lxc_book:
-			if cont in live_containers:
-				lxc_book_new[cont] = ResourceHTTPHandler.lxc_book[cont]
-			else:
-				on_old_lxc_goes(cont)
-		ResourceHTTPHandler.lxc_book = lxc_book_new
-		if len(ResourceHTTPHandler.system_monitor) >= BOOK_LEN:
-			ResourceHTTPHandler.system_monitor = ResourceHTTPHandler.system_monitor[1:]
-		ResourceHTTPHandler.system_monitor.append(get_system_usages())
-
-		for cont in ResourceHTTPHandler.lxc_book:
-			history = ResourceHTTPHandler.lxc_book[cont]
-			if len(history) != BOOK_LEN:
-				continue
-			w_cpu = w_mem = w_p = 0.0
-			for i in range(1, BOOK_LEN):
-				w_cpu += i * (history[i]['cpu'] - history[i-1]['cpu']) / 1024 / 1024 / 1024 / INTERVAL;
-				w_mem += i * history[i]['phy_mem'] / 1024 / 1024
-				w_p += i
-			cpu_ceof = w_cpu / w_p
-			mem_ceof = w_mem / w_p
-			print(time.time(), cont, "%.2f" % cpu_ceof, "%.2f" % mem_ceof)
-"""
 
 # echo "8:0 1000" > /sys/fs/cgroup/blkio/lxc/docklet-1-0/blkio.throttle.write_bps_device
 # https://www.kernel.org/doc/Documentation/devices.txt
