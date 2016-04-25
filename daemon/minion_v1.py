@@ -40,9 +40,13 @@ class case_handler:
 	def system_memsw_available(form, args):
 		return system_manager.get_available_memsw()
 	
-	# curl -L -X POST -F size=20 http://0.0.0.0:1729/v1/system/swap/resize
-	def system_swap_resize(form, args):
-		return system_manager.resize_swap(int(form['size']))
+	# curl -L -X POST -F size=16 http://0.0.0.0:1729/v1/system/swap/extend
+	def system_swap_extend(form, args):
+		return system_manager.extend_swap(int(form['size']))
+	
+	# curl -L -X POST http://0.0.0.0:1729/v1/system/swap/clear
+	def system_swap_clear(form, args):
+		return system_manager.clear_all_swaps()
 	
 	# curl -L -X POST http://0.0.0.0:1729/v1/system/total/physical/memory
 	def system_total_physical_memory(form, args):

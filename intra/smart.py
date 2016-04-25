@@ -1,4 +1,4 @@
-import subprocess, time, os, threading
+import subprocess, time, os, threading, math
 
 from intra.system import system_manager
 from intra.cgroup import cgroup_manager
@@ -36,12 +36,13 @@ class smart_controller:
 					billing_manager.clean_dead_node(item)
 				last_live = live
 				is_ready = True
-			
+				
 				memory_available = system_manager.get_available_memsw()
 				if memory_available['Mbytes'] <= 0:
-					print("[warning]", 'not recommended for overloaded containers.')
-			
-			
+					size_in_gb = int(math.ceil(-memory_available['Mbytes'] / 1024 / 16) * 16)
+					print("[warning]", 'overloaded containers, auto-extending %d G memsw.' % size_in_gb)
+					system_manager.extend_swap(size_in_gb)
+				
 				total_score = 0.0
 				score_mapping = {}
 				for item in live:

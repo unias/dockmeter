@@ -10,9 +10,11 @@
 #    curl -F uuid="lxc-name1" http://0.0.0.0:1729/v1/cgroup/container/sample
 #
 
-import time, sys, signal, json
+import time, sys, signal, json, subprocess
 
 if __name__ == '__main__':
+	if subprocess.getoutput('whoami') != 'root':
+		raise Exception('Root privilege is required.')
 	
 	def signal_handler(signal, frame):
 		sys.exit(0)
@@ -27,7 +29,7 @@ if __name__ == '__main__':
 
 		from intra.system import system_manager
 		system_manager.set_db_prefix('/var/lib/docklet/meter')
-		system_manager.resize_swap(32)
+		# system_manager.extend_swap(32)
 		
 		from connector.minion import minion_connector
 		minion_connector.start(sys.argv[1])

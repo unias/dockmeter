@@ -13,26 +13,28 @@ class system_manager:
 		except:
 			pass
 	
-	def resize_swap(size = -1):
+	def clear_all_swaps():
+		subprocess.getoutput('swapoff -a')
+		subprocess.getoutput('losetup -D')
+	
+	def extend_swap(size):
 		if size < 0:
 			(mem_free, mem_total) = system_manager.get_memory_sample()
 			size = (mem_total + mem_total // 8) // 1024
 		nid = 128
-		size <<= 10
-		if subprocess.getoutput("cat /proc/swaps | grep cg-loop | awk '{print $1}' | awk -F\- '{print $NF}'") == str(nid):
-			nid ^= 1
+		while subprocess.getoutput("cat /proc/swaps | grep cg-loop | awk '{print $1}' | awk -F\- '{print $NF}' | grep %d$" % nid) != "":
+			nid = nid + 1
 		start_time = time.time()
 		# setup
-		os.system('dd if=/dev/zero of=/tmp/cg-swap-%d bs=1M count=0 seek=%d >/dev/null 2>&1' % (nid, size))
+		os.system('dd if=/dev/zero of=/tmp/cg-swap-%d bs=1G count=0 seek=%d >/dev/null 2>&1' % (nid, size))
 		os.system('mknod -m 0660 /dev/cg-loop-%d b 7 %d >/dev/null 2>&1' % (nid, nid))
 		os.system('losetup /dev/cg-loop-%d /tmp/cg-swap-%d >/dev/null 2>&1' % (nid, nid))
 		os.system('mkswap /dev/cg-loop-%d >/dev/null 2>&1' % nid)
 		success = os.system('swapon /dev/cg-loop-%d >/dev/null 2>&1' % nid) == 0
 		# detach
-		nid ^= 1
-		os.system('swapoff /dev/cg-loop-%d >/dev/null 2>&1' % nid)
-		os.system('losetup -d /dev/cg-loop-%d >/dev/null 2>&1' % nid)
-		os.system('rm -f /dev/cg-loop-%d /tmp/cg-swap-%d >/dev/null 2>&1' % (nid, nid))
+		# os.system('swapoff /dev/cg-loop-%d >/dev/null 2>&1' % nid)
+		# os.system('losetup -d /dev/cg-loop-%d >/dev/null 2>&1' % nid)
+		# os.system('rm -f /dev/cg-loop-%d /tmp/cg-swap-%d >/dev/null 2>&1' % (nid, nid))
 		end_time = time.time()
 		return {"setup": success, "time": end_time - start_time }
 
