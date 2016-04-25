@@ -20,6 +20,7 @@ class smart_controller:
 		while True:
 			time.sleep(interval)
 			try:
+				mem_usage_mapping = {}
 				live = cgroup_manager.get_cgroup_containers()
 				for item in live:
 					try:
@@ -29,9 +30,10 @@ class smart_controller:
 					try:
 						cgroup_manager.protect_container_oom(item)
 						sample = cgroup_manager.get_container_sample(item)
+						mem_usage_mapping[item] = math.ceil(sample['mem_page_sample'] * 1e-6)
 						billing_manager.add_usage_sample(item, sample)
-					except Exception as e:
-						print("[exception]", e)
+					except:
+						pass
 				for item in last_live:
 					billing_manager.clean_dead_node(item)
 				last_live = live
@@ -43,22 +45,46 @@ class smart_controller:
 					print("[warning]", 'overloaded containers, auto-extending %d G memsw.' % size_in_gb)
 					system_manager.extend_swap(size_in_gb)
 				
+				print("-------------------------------")
+				
 				total_score = 0.0
 				score_mapping = {}
 				for item in live:
 					score = max(1e-8, smart_controller.policy.get_score_by_uuid(item))
 					score_mapping[item] = score
-					print(item, "(score)", score)
+					print(item, "(score/cpu)", score)
 					total_score += score
-			
-				mem_alloc = system_manager.get_total_physical_memory_for_containers()['Mbytes']
-			
+				
+				# CPU Scoring
 				for item in live:
 					ceof = score_mapping[item] / total_score
-					item_alloc = mem_alloc * ceof
 					cgroup_manager.set_container_cpu_priority_limit(item, ceof)
-					cgroup_manager.set_container_physical_memory_limit(item, item_alloc)
-					# print(item if len(item)<16 else item[:16] + "..", "cpu share:", "%.1f%%," % (ceof * 100), "mem alloc:", item_alloc, "mbytes")
+				
+				# Iterative Memory Scoring
+				free_mem = system_manager.get_total_physical_memory_for_containers()['Mbytes']
+				local_nodes = live
+				mem_alloc = {}
+				for item in live:
+					mem_alloc[item] = 0
+				
+				while free_mem > 0 and len(local_nodes) > 0:
+					excess_mem = 0
+					next_local_nodes = []
+					for item in local_nodes:
+						mem_alloc[item] += int(math.floor(free_mem * score_mapping[item] / total_score))
+						if mem_alloc[item] >= mem_usage_mapping[item]:
+							excess_mem += mem_alloc[item] - mem_usage_mapping[item]
+							mem_alloc[item] = mem_usage_mapping[item]
+						else:
+							next_local_nodes.append(item)
+					free_mem = excess_mem
+					local_nodes = next_local_nodes
+				
+				for item in live:
+					mem_alloc[item] += int(math.floor(free_mem * score_mapping[item] / total_score))
+					cgroup_manager.set_container_physical_memory_limit(item, mem_alloc[item])
+					print(item, "(malloc:usage)", mem_alloc[item], mem_usage_mapping[item])
+				
 			except:
 				pass
 
