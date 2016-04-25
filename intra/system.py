@@ -92,8 +92,8 @@ class system_manager:
 				limit = cgroup_manager.get_container_limit(item)
 				total_mem_limit += limit["mem_page_quota"]
 				total_mem_used += sample["mem_page_sample"]
-			except Exception as e:
-				print("[exception]", e)
+			except:
+				pass
 		
 		total_mem_limit >>= 20
 		total_mem_used = (total_mem_used + (1<<20) - 1) >> 20
@@ -111,8 +111,8 @@ class system_manager:
 			try:
 				sample = cgroup_manager.get_container_sample(item)
 				total_mem_used += sample["mem_page_sample"]
-			except Exception as e:
-				print("[exception]", e)
+			except:
+				pass
 		
 		total_mem_used = (total_mem_used + (1<<20) - 1) >> 20
 		total_physical_memory_for_containers = sysloads['mem_free'] + total_mem_used

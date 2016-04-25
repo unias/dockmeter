@@ -45,7 +45,8 @@ class smart_controller:
 					print("[warning]", 'overloaded containers, auto-extending %d G memsw.' % size_in_gb)
 					system_manager.extend_swap(size_in_gb)
 				
-				print("-------------------------------")
+				if len(live) > 0:
+					print("-------------------------------")
 				
 				total_score = 0.0
 				score_mapping = {}

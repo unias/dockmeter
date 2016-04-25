@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 
-import socket, select, errno, threading
+import socket, select, errno, threading, os
 
 class master_connector:
 	
@@ -9,13 +9,28 @@ class master_connector:
 	
 	conn = {}
 	epoll_fd = select.epoll()
-
+	
+	def establish_vswitch(ovsname):
+		os.system('ovs-vsctl del-br ovs-%s >/dev/null 2>&1' % ovsname)
+		os.system('ovs-vsctl add-br ovs-%s' % ovsname)
+		os.system('brctl addif ovs-bridge ovs-%s >/dev/null 2>&1' % ovsname)
+		os.system('ip link set ovs-system up')
+		os.system('ip link set ovs-%s up' % ovsname)
+	
+	def build_gre_conn(ovsname, ipaddr):
+		name = ipaddr.replace('.','_')
+		os.system('ovs-vsctl add-port ovs-%s gre-%s -- set interface gre-%s type=gre options:remote_ip=%s 2>/dev/null' % (ovsname, name, name, ipaddr))
+	
+	def break_gre_conn(ovsname, ipaddr):
+		name = ipaddr.replace('.','_')
+		os.system('ovs-vsctl del-port ovs-%s gre-%s 2>/dev/null' % (ovsname, name))
+	
 	def close_connection(fd):
 		master_connector.epoll_fd.unregister(fd)
 		master_connector.conn[fd][0].close()
 		addr = master_connector.conn[fd][1]
 		master_connector.conn.pop(fd)
-		# print("[warn]", "close conn '%s', remaining %d conn." % (addr, len(master_connector.conn)))
+		master_connector.break_gre_conn('master', addr)
 
 	def do_message_response(input_buffer):
 		assert(input_buffer == b'ack')
@@ -37,6 +52,8 @@ class master_connector:
 		
 		datalist = {}
 		
+		master_connector.establish_vswitch('master')
+		
 		while True:
 			epoll_list = master_connector.epoll_fd.poll()
 			for fd, events in epoll_list:
@@ -45,6 +62,7 @@ class master_connector:
 					fileno.setblocking(0)
 					master_connector.epoll_fd.register(fileno.fileno(), select.EPOLLIN | select.EPOLLET)
 					master_connector.conn[fileno.fileno()] = (fileno, addr[0])
+					master_connector.build_gre_conn('master', addr[0])
 				elif select.EPOLLIN & events:
 					datas = b''
 					while True:

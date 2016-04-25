@@ -16,10 +16,6 @@ if __name__ == '__main__':
 	if subprocess.getoutput('whoami') != 'root':
 		raise Exception('Root privilege is required.')
 	
-	def signal_handler(signal, frame):
-		sys.exit(0)
-	signal.signal(signal.SIGINT, signal_handler)
-	
 	from daemon.http import *
 	
 	if len(sys.argv) > 1: # for minions
@@ -39,12 +35,22 @@ if __name__ == '__main__':
 		
 		smart_controller.set_policy(identify_policy)
 		smart_controller.start()
+	
+		def minion_signal_handler(signal, frame):
+			subprocess.getoutput('ovs-vsctl del-br ovs-minion')
+			sys.exit(0)
+		signal.signal(signal.SIGINT, minion_signal_handler)
 		
 		http = http_daemon_listener(minion_http_handler)
 		http.listen()
 	else: # for master
 		from connector.master import master_connector
 		master_connector.start()
+	
+		def master_signal_handler(signal, frame):
+			subprocess.getoutput('ovs-vsctl del-br ovs-master')
+			sys.exit(0)
+		signal.signal(signal.SIGINT, master_signal_handler)
 		
 		http = http_daemon_listener(master_http_handler, master_connector)
 		http.listen()

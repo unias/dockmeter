@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 
-import socket, time, threading
+import socket, time, threading, os
 
 class minion_connector:
 	
@@ -13,6 +13,10 @@ class minion_connector:
 				fd.connect((server_ip, master_connector.tcp_port))
 				connected = True
 				print("[info]", "connected to master.")
+				
+				master_connector.establish_vswitch('minion')
+				master_connector.build_gre_conn('minion', server_ip)
+				
 				while True:
 					data = b'ack'
 					if fd.send(data) != len(data):
@@ -21,6 +25,7 @@ class minion_connector:
 					time.sleep(1)
 				fd.close()
 			except socket.error as e:
+				master_connector.break_gre_conn('minion', server_ip)
 				if connected:
 					print("[info]", "non-connected with master.")
 				connected = False
