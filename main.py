@@ -2,7 +2,7 @@
 
 ########################################
 # Boot for Local:
-#   sudo ./main 0.0.0.0
+#   sudo ./main (or: sudo ./main [master-ipaddr])
 #
 
 ########################################
@@ -17,8 +17,14 @@ if __name__ == '__main__':
 		raise Exception('Root privilege is required.')
 	
 	from daemon.http import *
+	if len(sys.argv) == 1:
+		sys.argv.append('disable-network')
 	
-	if len(sys.argv) > 1: # for minions
+	def signal_handler(signal, frame):
+		sys.exit(0)
+	signal.signal(signal.SIGINT, signal_handler)
+	
+	if sys.argv[1] != 'master': # for minions
 		from intra.cgroup import cgroup_manager
 		cgroup_manager.auto_detect_prefix()
 		cgroup_manager.set_default_memory_limit(4)
@@ -27,30 +33,24 @@ if __name__ == '__main__':
 		system_manager.set_db_prefix('/var/lib/docklet/meter')
 		# system_manager.extend_swap(32)
 		
-		from connector.minion import minion_connector
-		minion_connector.start(sys.argv[1])
+		if sys.argv[1] != 'disable-network':
+			from connector.minion import minion_connector
+			minion_connector.start(sys.argv[1])
 
 		from policy.quota import identify_policy
 		from intra.smart import smart_controller
 		
 		smart_controller.set_policy(identify_policy)
 		smart_controller.start()
-	
-		def minion_signal_handler(signal, frame):
-			subprocess.getoutput('ovs-vsctl del-br ovs-minion')
-			sys.exit(0)
-		signal.signal(signal.SIGINT, minion_signal_handler)
+		
 		
 		http = http_daemon_listener(minion_http_handler)
 		http.listen()
-	else: # for master
+		
+	else: # for master: sudo ./main master
 		from connector.master import master_connector
 		master_connector.start()
-	
-		def master_signal_handler(signal, frame):
-			subprocess.getoutput('ovs-vsctl del-br ovs-master')
-			sys.exit(0)
-		signal.signal(signal.SIGINT, master_signal_handler)
 		
 		http = http_daemon_listener(master_http_handler, master_connector)
 		http.listen()
+

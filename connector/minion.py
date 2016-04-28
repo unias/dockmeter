@@ -22,18 +22,19 @@ class minion_connector:
 					if fd.send(data) != len(data):
 						break
 					readData = fd.recv(1024)
-					time.sleep(1)
+					time.sleep(0.5)
 				fd.close()
 			except socket.error as e:
 				master_connector.break_gre_conn('minion', server_ip)
 				if connected:
 					print("[info]", "non-connected with master.")
-				connected = False
-				pass
 			except Exception as e:
-				print("[warn]", e)
+				pass
 			finally:
-				time.sleep(4)
+				if connected:
+					os.system('ovs-vsctl del-br ovs-minion >/dev/null 2>&1')
+				connected = False
+				time.sleep(1)
 	
 	def start(server_ip):
 		thread = threading.Thread(target = minion_connector.connect, args = [server_ip])

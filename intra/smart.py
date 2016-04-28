@@ -45,9 +45,6 @@ class smart_controller:
 					print("[warning]", 'overloaded containers, auto-extending %d G memsw.' % size_in_gb)
 					system_manager.extend_swap(size_in_gb)
 				
-				if len(live) > 0:
-					print("-------------------------------")
-				
 				total_score = 0.0
 				score_mapping = {}
 				for item in live:
@@ -85,6 +82,9 @@ class smart_controller:
 					mem_alloc[item] += int(math.floor(free_mem * score_mapping[item] / total_score))
 					cgroup_manager.set_container_physical_memory_limit(item, mem_alloc[item])
 					print(item, "(malloc:usage)", mem_alloc[item], mem_usage_mapping[item])
+				
+				if len(live) > 0:
+					print("-------------------------------")
 				
 			except:
 				pass
