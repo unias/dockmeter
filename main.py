@@ -27,6 +27,10 @@ if __name__ == '__main__':
 		sys.argv.append('disable-network')
 	
 	def signal_handler(signal, frame):
+		if sys.argv[1] == 'master':
+			subprocess.getoutput('ovs-vsctl del-br ovs-master >/dev/null 2>&1')
+		else:
+			subprocess.getoutput('ovs-vsctl del-br ovs-minion >/dev/null 2>&1')
 		sys.exit(0)
 	signal.signal(signal.SIGINT, signal_handler)
 	
@@ -42,6 +46,8 @@ if __name__ == '__main__':
 		if sys.argv[1] != 'disable-network':
 			from connector.minion import minion_connector
 			minion_connector.start(sys.argv[1])
+		else:
+			print("(No network mode)")
 
 		from policy.quota import identify_policy
 		from intra.smart import smart_controller
