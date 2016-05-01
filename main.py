@@ -10,9 +10,15 @@
 #    curl -F uuid="lxc-name1" http://0.0.0.0:1729/v1/cgroup/container/sample
 #
 
-import time, sys, signal, json, subprocess
+import time, sys, signal, json, subprocess, os
 
 if __name__ == '__main__':
+	if not subprocess.getoutput('lsb_release -r -s 2>/dev/null').startswith('16.04'):
+		raise Exception('Ubuntu 16.04 LTS is required.')
+	
+	if not os.path.exists('/sys/fs/cgroup/memory/memory.memsw.usage_in_bytes'):
+		raise Exception('Please append "swapaccount=1" to kernel.')
+	
 	if subprocess.getoutput('whoami') != 'root':
 		raise Exception('Root privilege is required.')
 	
@@ -43,7 +49,7 @@ if __name__ == '__main__':
 		smart_controller.set_policy(identify_policy)
 		smart_controller.start()
 		
-		
+		print("Minion REST Daemon Starts Listening ..")
 		http = http_daemon_listener(minion_http_handler)
 		http.listen()
 		
@@ -51,6 +57,7 @@ if __name__ == '__main__':
 		from connector.master import master_connector
 		master_connector.start()
 		
+		print("Master REST Daemon Starts Listening ..")
 		http = http_daemon_listener(master_http_handler, master_connector)
 		http.listen()
 
